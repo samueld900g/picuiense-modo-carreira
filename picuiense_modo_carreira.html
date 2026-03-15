@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modo Carreira · Picuiense FC</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --green: #1a6b2f;
+    --green-light: #2d9247;
+    --green-dim: #0f3d1a;
+    --cream: #f5f0e8;
+    --cream-dark: #e8e0cc;
+    --ink: #111;
+    --muted: #6b6b6b;
+    --danger: #c0392b;
+    --success: #1a7a3a;
+    --border: #d0c8b4;
+    --card-bg: #faf7f0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--green-dim);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    height: 64px;
+    border-bottom: 3px solid var(--green-light);
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    color: var(--cream);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+  .logo span { color: var(--green-light); }
+  header nav { margin-left: auto; display: flex; gap: 8px; }
+  header nav button {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--cream);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  header nav button:hover, header nav button.active {
+    background: var(--green-light);
+    border-color: var(--green-light);
+  }
+
+  /* MAIN */
+  main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    color: var(--green);
+    border-bottom: 2px solid var(--green-light);
+    padding-bottom: 6px;
+    margin-bottom: 1.5rem;
+  }
+
+  /* STEP INDICATOR */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .step {
+    flex: 1;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .step:last-child { border-right: none; }
+  .step.active { background: var(--green); color: white; }
+  .step.done { background: #e8f5eb; color: var(--green); }
+  .step-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .step.active .step-num { background: rgba(255,255,255,0.2); }
+  .step.done .step-num { background: var(--green-light); color: white; }
+
+  /* CARDS */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .card-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  /* DROP ZONES */
+  .drop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    background: white;
+    min-height: 140px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .drop-zone:hover { border-color: var(--green-light); background: #f0faf2; }
+  .drop-zone.filled { border-color: var(--green); border-style: solid; background: #f0faf2; }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { font-size: 2rem; opacity: 0.4; }
+  .drop-label { font-size: 0.85rem; color: var(--muted); }
+  .drop-sublabel { font-size: 0.75rem; color: var(--muted); opacity: 0.7; }
+  .drop-preview { max-height: 90px; border-radius: 4px; object-fit: contain; }
+
+  /* FORM FIELDS */
+  .field-grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+  .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .field input, .field select {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--ink);
+    transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--green-light); }
+
+  /* STATS SECTION */
+  .stats-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 12px 16px;
+    background: var(--green-dim);
+    border-radius: 8px;
+    color: white;
+  }
+  .team-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 1px; }
+  .team-name.right { text-align: right; }
+  .vs-badge {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--cream-dark);
+    text-align: center;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto 1fr 80px;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .stats-row:last-child { border-bottom: none; }
+  .stat-val {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+  .stat-val:focus { outline: none; border-color: var(--green-light); }
+  .stat-label { text-align: center; font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+
+  /* GOALS */
+  .goals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .goal-team-label {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); margin-bottom: 8px;
+  }
+  .goal-rows { display: flex; flex-direction: column; gap: 6px; }
+  .goal-row { display: grid; grid-template-columns: 1fr 80px; gap: 6px; }
+  .goal-row input {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    background: white;
+  }
+  .goal-row input:focus { outline: none; border-color: var(--green-light); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-primary:hover { background: var(--green-light); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-secondary { background: white; color: var(--ink); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--cream-dark); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #1f8f42; }
+  .btn-danger { background: var(--danger); color: white; font-size: 0.8rem; padding: 6px 12px; }
+
+  .action-bar { display: flex; gap: 10px; align-items: center; margin-top: 1.5rem; }
+
+  /* STATUS */
+  #status-bar {
+    padding: 10px 16px; border-radius: 6px; margin-top: 12px;
+    font-size: 0.88rem; display: none;
+  }
+  .status-info { background: #e8f0fe; color: #1a56db; display: block !important; }
+  .status-success { background: #e8f5eb; color: var(--success); display: block !important; }
+  .status-error { background: #fde8e8; color: var(--danger); display: block !important; }
+
+  /* PREVIEW TABLE */
+  .preview-table-wrap { overflow-x: auto; margin-top: 1rem; }
+  .preview-table {
+    width: 100%; border-collapse: collapse; font-size: 0.8rem;
+  }
+  .preview-table th {
+    background: var(--green-dim); color: white;
+    padding: 8px 10px; text-align: left; font-weight: 500;
+    white-space: nowrap;
+  }
+  .preview-table td {
+    padding: 7px 10px; border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .preview-table tr:nth-child(even) td { background: #f8f5ee; }
+
+  /* HISTORY */
+  .history-empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
+  .history-controls { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; }
+  .history-controls input {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; flex: 1;
+    background: white;
+  }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin-top: 1rem; }
+  .progress-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--green-light); border-radius: 3px; width: 0%; transition: width 0.4s; }
+
+  /* RESULT CARD */
+  .result-card {
+    background: white; border: 2px solid var(--green);
+    border-radius: 10px; padding: 1.5rem; text-align: center; margin-top: 1rem;
+  }
+  .result-score {
+    font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px; color: var(--green);
+  }
+  .result-teams { font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; }
+  .result-comp { font-size: 0.8rem; color: var(--muted); }
+
+  @media(max-width:700px) {
+    .drop-grid { grid-template-columns: 1fr; }
+    .field-grid-3, .field-grid-4 { grid-template-columns: 1fr 1fr; }
+    .goals-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 60px 1fr auto 1fr 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Picuiense <span>FC</span> · Modo Carreira</div>
+  <nav>
+    <button class="active" onclick="switchView('registrar', this)">Registrar Partida</button>
+    <button onclick="switchView('historico', this)">Histórico</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ========== VIEW: REGISTRAR ========== -->
+<div id="view-registrar" class="view active">
+  <div class="section-title">Registrar Partida</div>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step active" id="step-tab-1" onclick="gotoStep(1)">
+      <div class="step-num">1</div>
+      <span>Imagens</span>
+    </div>
+    <div class="step" id="step-tab-2" onclick="gotoStep(2)">
+      <div class="step-num">2</div>
+      <span>Dados Gerais</span>
+    </div>
+    <div class="step" id="step-tab-3" onclick="gotoStep(3)">
+      <div class="step-num">3</div>
+      <span>Estatísticas</span>
+    </div>
+    <div class="step" id="step-tab-4" onclick="gotoStep(4)">
+      <div class="step-num">4</div>
+      <span>Gols</span>
+    </div>
+    <div class="step" id="step-tab-5" onclick="gotoStep(5)">
+      <div class="step-num">5</div>
+      <span>Exportar</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: IMAGES -->
+  <div id="step-1" class="step-content">
+    <div class="card">
+      <div class="card-title">Carregar imagens da partida</div>
+      <div class="drop-grid">
+        <div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-bottom:6px;font-weight:600;">IMAGEM 1 — Placar e estatísticas</div>
+          <div class="drop-zone" id="zone1">
+            <input type="file" accept="image/*" onchange="handleImg(1,this)">
+            <div class="drop-icon">📊</div>
+            <div class="drop-label" id="label1">Clique ou arraste aqui</div>
+            <div class="drop-sublabel">Tela com o resultado e estatísticas</div>
+            <img id="prev1" class="drop-preview" style="display:none">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-bottom:6px;font-weight:600;">IMAGEM 2 — Eventos da partida (Gols)</div>
+          <div class="drop-zone" id="zone2">
+            <input type="file" accept="image/*" onchange="handleImg(2,this)">
+            <div class="drop-icon">⚽</div>
+            <div class="drop-label" id="label2">Clique ou arraste aqui</div>
+            <div class="drop-sublabel">Tela com os eventos / gols marcados</div>
+            <img id="prev2" class="drop-preview" style="display:none">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Extrair dados com IA</div>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:1rem;">A IA vai ler as imagens e preencher automaticamente todos os campos. Você poderá revisar antes de salvar.</p>
+      <button class="btn btn-primary" onclick="extractWithAI()" id="btn-extract">🤖 Analisar imagens com IA</button>
+      <div class="progress-wrap" id="progress-wrap" style="display:none">
+        <div class="progress-label" id="progress-label">Analisando imagens...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+      <div id="status-bar"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-secondary" onclick="skipToManual()">Preencher manualmente →</button>
+      <button class="btn btn-primary" onclick="gotoStep(2)" id="btn-next1" disabled>Próximo →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: DADOS GERAIS -->
+  <div id="step-2" class="step-content" style="display:none">
+    <div class="card">
+      <div class="card-title">Informações da competição</div>
+      <div class="field-grid-3" style="margin-bottom:1rem;">
+        <div class="field">
+          <label>Competição</label>
+          <select id="f-comp">
+            <option>Campeonato Paraibano</option>
+            <option>Copa do Nordeste</option>
+            <option>Brasileirão Série A</option>
+            <option>Brasileirão Série B</option>
+            <option>Brasileirão Série C</option>
+            <option>Brasileirão Série D</option>
+            <option>Copa do Brasil</option>
+            <option>Super Copa do Brasil</option>
+            <option>Recopa</option>
+            <option>Libertadores</option>
+            <option>Sulamericana</option>
+            <option>Mundial</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Rodada / Fase</label>
+          <input id="f-round" placeholder="ex: Fase de Grupo, Final...">
+        </div>
+        <div class="field">
+          <label>Temporada</label>
+          <select id="f-season">
+            <option value="T1">T1</option><option value="T2">T2</option>
+            <option value="T3">T3</option><option value="T4">T4</option>
+            <option value="T5">T5</option><option value="T6">T6</option>
+            <option value="T7">T7</option><option value="T8">T8</option>
+            <option value="T9">T9</option><option value="T10" selected>T10</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Times e resultado</div>
+      <div class="field-grid-4" style="margin-bottom:1rem;">
+        <div class="field">
+          <label>L (Local/Fora)</label>
+          <select id="f-l">
+            <option value="C">C – Casa</option>
+            <option value="F">F – Fora</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>R (Resultado)</label>
+          <select id="f-r">
+            <option value="V">V – Vitória</option>
+            <option value="E">E – Empate</option>
+            <option value="D">D – Derrota</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Pênaltis (GC)</label>
+          <input id="f-pen-gc" type="number" placeholder="ex: 4">
+        </div>
+        <div class="field">
+          <label>Pênaltis (GF)</label>
+          <input id="f-pen-gf" type="number" placeholder="ex: 2">
+        </div>
+      </div>
+      <div class="field-grid-4">
+        <div class="field">
+          <label>Time da Casa</label>
+          <input id="f-casa" placeholder="Nome do time">
+        </div>
+        <div class="field">
+          <label>GC (gols sofridos)</label>
+          <input id="f-gc" type="number" placeholder="0">
+        </div>
+        <div class="field">
+          <label>GF (gols feitos)</label>
+          <input id="f-gf" type="number" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Time Visitante</label>
+          <input id="f-fora" placeholder="Nome do time">
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-secondary" onclick="gotoStep(1)">← Voltar</button>
+      <button class="btn btn-primary" onclick="gotoStep(3)">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: ESTATÍSTICAS -->
+  <div id="step-3" class="step-content" style="display:none">
+    <div class="card">
+      <div class="card-title">Estatísticas da partida</div>
+      <div class="stats-header">
+        <div class="team-name" id="sh-casa">Time da Casa</div>
+        <div class="vs-badge">ESTATÍSTICAS</div>
+        <div class="team-name right" id="sh-fora">Time Visitante</div>
+      </div>
+
+      <div id="stats-rows">
+        <!-- rows injected by JS -->
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-secondary" onclick="gotoStep(2)">← Voltar</button>
+      <button class="btn btn-primary" onclick="gotoStep(4)">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: GOLS -->
+  <div id="step-4" class="step-content" style="display:none">
+    <div class="card">
+      <div class="card-title">Gols da partida</div>
+      <div class="goals-grid">
+        <div>
+          <div class="goal-team-label" id="gl-pic">⚽ Gols do Picuiense</div>
+          <div class="goal-rows" id="goals-pic"></div>
+          <button class="btn btn-secondary" style="margin-top:8px;font-size:0.8rem;padding:6px 12px;" onclick="addGoalRow('pic')">+ Gol</button>
+        </div>
+        <div>
+          <div class="goal-team-label" id="gl-adv">🔴 Gols do Adversário</div>
+          <div class="goal-rows" id="goals-adv"></div>
+          <button class="btn btn-secondary" style="margin-top:8px;font-size:0.8rem;padding:6px 12px;" onclick="addGoalRow('adv')">+ Gol</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-secondary" onclick="gotoStep(3)">← Voltar</button>
+      <button class="btn btn-primary" onclick="gotoStep(5)">Revisar →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: EXPORTAR -->
+  <div id="step-5" class="step-content" style="display:none">
+    <div class="card">
+      <div class="card-title">Resumo da partida</div>
+      <div class="result-card">
+        <div class="result-teams" id="res-teams">—</div>
+        <div class="result-score" id="res-score">0 – 0</div>
+        <div class="result-comp" id="res-comp">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Instruções para salvar na sua planilha</div>
+      <div style="font-size:0.88rem;color:var(--muted);line-height:1.7;margin-bottom:1rem;">
+        <strong style="color:var(--ink);">1. Baixe o arquivo Excel abaixo</strong> — ele contém os dados da partida formatados para a sua planilha.<br>
+        <strong style="color:var(--ink);">2. Abra sua planilha no Google Sheets</strong> e navegue até a aba da temporada selecionada.<br>
+        <strong style="color:var(--ink);">3. Cole os dados</strong> na próxima linha disponível após os dados existentes (colunas AP em diante).<br><br>
+        <em>Ou baixe a planilha atualizada diretamente abaixo caso tenha carregado sua planilha original.</em>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="downloadRow()">⬇ Baixar dados desta partida (.xlsx)</button>
+        <button class="btn btn-success" onclick="loadAndAppend()">📊 Carregar planilha original e adicionar</button>
+        <input type="file" id="orig-file" accept=".xlsx" style="display:none" onchange="appendToOriginal(this)">
+      </div>
+
+      <div id="dl-status" style="margin-top:1rem;font-size:0.85rem;"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-secondary" onclick="gotoStep(4)">← Voltar</button>
+      <button class="btn btn-primary" onclick="saveToHistory()">✅ Salvar no histórico e nova partida</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== VIEW: HISTÓRICO ========== -->
+<div id="view-historico" class="view">
+  <div class="section-title">Histórico de Partidas</div>
+  <div class="history-controls">
+    <input type="text" id="search-hist" placeholder="Buscar por time, competição..." oninput="renderHistory()">
+    <button class="btn btn-secondary" onclick="clearHistory()">🗑 Limpar tudo</button>
+    <button class="btn btn-primary" onclick="downloadAllHistory()">⬇ Exportar todas (.xlsx)</button>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+</main>
+
+<script>
+// ==================== STATE ====================
+let imgs = {1: null, 2: null};
+let currentStep = 1;
+let matchData = {};
+let history = JSON.parse(localStorage.getItem('pic_history') || '[]');
+
+const STATS_FIELDS = [
+  {key:'finalizacoes', label:'Finalizações'},
+  {key:'finalizacoes_certas', label:'Finalizações Certas'},
+  {key:'posse', label:'Posse de Bola (%)'},
+  {key:'divididas', label:'Divididas'},
+  {key:'faltas', label:'Faltas'},
+  {key:'escanteios', label:'Escanteios'},
+  {key:'precisao_fin', label:'Precisão na Finalização'},
+  {key:'precisao_passe', label:'Precisão o Passe'},
+];
+
+// ==================== INIT ====================
+renderStatsRows();
+renderGoalRows();
+renderHistory();
+
+function renderStatsRows() {
+  const cont = document.getElementById('stats-rows');
+  cont.innerHTML = STATS_FIELDS.map(f => `
+    <div class="stats-row">
+      <input class="stat-val" id="sc-${f.key}" type="number" placeholder="—">
+      <div></div>
+      <div class="stat-label">${f.label}</div>
+      <div></div>
+      <input class="stat-val" id="sa-${f.key}" type="number" placeholder="—">
+    </div>
+  `).join('');
+}
+
+function renderGoalRows() {
+  ['pic','adv'].forEach(t => {
+    const cont = document.getElementById('goals-'+t);
+    cont.innerHTML = '';
+    for(let i=0;i<3;i++) addGoalRow(t, false);
+  });
+}
+
+function addGoalRow(team, scroll=true) {
+  const cont = document.getElementById('goals-'+team);
+  const idx = cont.children.length;
+  const div = document.createElement('div');
+  div.className = 'goal-row';
+  div.innerHTML = `
+    <input placeholder="Nome do jogador" id="g${team}-player-${idx}">
+    <input placeholder="Min" id="g${team}-min-${idx}" style="text-align:center;">
+  `;
+  cont.appendChild(div);
+  if(scroll) div.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// ==================== VIEW SWITCH ====================
+function switchView(view, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('header nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  btn.classList.add('active');
+  if(view==='historico') renderHistory();
+}
+
+// ==================== STEPS ====================
+function gotoStep(n) {
+  if(n===5) buildPreview();
+  document.querySelectorAll('.step-content').forEach(s=>s.style.display='none');
+  document.getElementById('step-'+n).style.display='block';
+  document.querySelectorAll('.step').forEach((s,i)=>{
+    s.classList.remove('active','done');
+    if(i+1===n) s.classList.add('active');
+    else if(i+1<n) s.classList.add('done');
+  });
+  currentStep=n;
+
+  // Update team names in stats header
+  if(n===3){
+    document.getElementById('sh-casa').textContent = document.getElementById('f-casa').value || 'Casa';
+    document.getElementById('sh-fora').textContent = document.getElementById('f-fora').value || 'Fora';
+  }
+  if(n===4){
+    const lv = document.getElementById('f-l').value;
+    const casa = document.getElementById('f-casa').value || 'Casa';
+    const fora = document.getElementById('f-fora').value || 'Fora';
+    const picName = lv==='C' ? casa : fora;
+    const advName = lv==='C' ? fora : casa;
+    document.getElementById('gl-pic').textContent = '⚽ Gols do Picuiense (' + picName + ')';
+    document.getElementById('gl-adv').textContent = '🔴 Gols do adversário (' + advName + ')';
+  }
+}
+
+function skipToManual() {
+  gotoStep(2);
+}
+
+// ==================== IMAGE HANDLING ====================
+function handleImg(n, input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    imgs[n] = e.target.result;
+    const prev = document.getElementById('prev'+n);
+    prev.src = e.target.result;
+    prev.style.display='block';
+    document.getElementById('label'+n).style.display='none';
+    document.getElementById('zone'+n).classList.add('filled');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ==================== AI EXTRACTION ====================
+async function extractWithAI() {
+  if(!imgs[1] || !imgs[2]) {
+    setStatus('Por favor, adicione as duas imagens antes de analisar.', 'error');
+    return;
+  }
+  const btn = document.getElementById('btn-extract');
+  btn.disabled = true;
+  showProgress('Enviando imagens para a IA...', 20);
+
+  const toB64 = d => d.split(',')[1];
+  const prompt = `Você é um extrator de dados de partidas de futebol de videogame. Analise as duas imagens e retorne APENAS um JSON puro (sem markdown, sem \`\`\`, sem texto antes ou depois) com estes campos exatos:
+{
+  "comp": "nome da competição (ex: Campeonato Paraibano)",
+  "rodada": "rodada ou fase (ex: Fase de Grupo, Final)",
+  "l": "C se o Picuiense jogou em casa, F se jogou fora",
+  "r": "V para vitória, E para empate, D para derrota do Picuiense",
+  "casa": "nome do time da casa",
+  "gc": número inteiro de gols da casa,
+  "gf": número inteiro de gols do visitante,
+  "fora": "nome do time visitante",
+  "pen_gc": número de gols de pênalti do time da casa (ou null),
+  "pen_gf": número de gols de pênalti do visitante (ou null),
+  "sc_finalizacoes": número,
+  "sc_finalizacoes_certas": número,
+  "sc_posse": número (sem %),
+  "sc_divididas": número,
+  "sc_faltas": número,
+  "sc_escanteios": número,
+  "sc_precisao_fin": número,
+  "sc_precisao_passe": número,
+  "sa_finalizacoes": número,
+  "sa_finalizacoes_certas": número,
+  "sa_posse": número,
+  "sa_divididas": número,
+  "sa_faltas": número,
+  "sa_escanteios": número,
+  "sa_precisao_fin": número,
+  "sa_precisao_passe": número,
+  "gols_pic": [{"jogador":"nome","minuto":"30'"},{"jogador":"nome","minuto":"45'"}],
+  "gols_adv": [{"jogador":"nome","minuto":"75'"}]
+}
+REGRAS:
+- Na tabela de estatísticas: coluna ESQUERDA = time da CASA, coluna DIREITA = time VISITANTE
+- "sc_" = estatísticas do time da CASA, "sa_" = estatísticas do time VISITANTE
+- "gols_pic" = gols do Picuiense. Identifique qual time é o Picuiense pelo nome.
+- "gols_adv" = gols do adversário
+- Retorne apenas o JSON. Sem texto antes ou depois.`;
+
+  try {
+    showProgress('IA analisando as imagens...', 60);
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1500,
+        messages:[{role:"user",content:[
+          {type:"image",source:{type:"base64",media_type:"image/jpeg",data:toB64(imgs[1])}},
+          {type:"image",source:{type:"base64",media_type:"image/jpeg",data:toB64(imgs[2])}},
+          {type:"text",text:prompt}
+        ]}]
+      })
+    });
+    const data = await res.json();
+    showProgress('Processando resultado...', 90);
+    const text = data.content.map(b=>b.text||'').join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const d = JSON.parse(clean);
+    fillFormFromAI(d);
+    showProgress('Pronto!', 100);
+    setStatus('✅ Dados extraídos com sucesso! Revise e avance para o próximo passo.', 'success');
+    document.getElementById('btn-next1').disabled = false;
+    setTimeout(()=>{ document.getElementById('progress-wrap').style.display='none'; },1500);
+  } catch(e) {
+    setStatus('Erro ao processar: ' + e.message, 'error');
+    document.getElementById('progress-wrap').style.display='none';
+  }
+  btn.disabled = false;
+}
+
+function showProgress(label, pct) {
+  document.getElementById('progress-wrap').style.display='block';
+  document.getElementById('progress-label').textContent = label;
+  document.getElementById('progress-fill').style.width = pct+'%';
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('status-bar');
+  el.textContent = msg;
+  el.className = 'status-'+cls;
+  el.style.display='block';
+}
+
+function fillFormFromAI(d) {
+  // Competition
+  const compSel = document.getElementById('f-comp');
+  for(let o of compSel.options) if(o.value===d.comp||o.textContent===d.comp) { compSel.value=o.value; break; }
+  document.getElementById('f-round').value = d.rodada || '';
+  const lSel = document.getElementById('f-l');
+  for(let o of lSel.options) if(o.value===d.l) { lSel.value=o.value; break; }
+  const rSel = document.getElementById('f-r');
+  for(let o of rSel.options) if(o.value===d.r) { rSel.value=o.value; break; }
+  document.getElementById('f-casa').value = d.casa || '';
+  document.getElementById('f-gc').value = d.gc ?? '';
+  document.getElementById('f-gf').value = d.gf ?? '';
+  document.getElementById('f-fora').value = d.fora || '';
+  if(d.pen_gc) document.getElementById('f-pen-gc').value = d.pen_gc;
+  if(d.pen_gf) document.getElementById('f-pen-gf').value = d.pen_gf;
+
+  // Stats
+  STATS_FIELDS.forEach(f => {
+    const sc = document.getElementById('sc-'+f.key);
+    const sa = document.getElementById('sa-'+f.key);
+    if(sc) sc.value = d['sc_'+f.key] ?? '';
+    if(sa) sa.value = d['sa_'+f.key] ?? '';
+  });
+
+  // Goals
+  ['pic','adv'].forEach(team => {
+    const cont = document.getElementById('goals-'+team);
+    cont.innerHTML='';
+    const gols = d['gols_'+team] || [];
+    const n = Math.max(gols.length, 3);
+    for(let i=0;i<n;i++) {
+      const g = gols[i] || {};
+      const div=document.createElement('div');
+      div.className='goal-row';
+      div.innerHTML=`<input placeholder="Nome do jogador" id="g${team}-player-${i}" value="${g.jogador||''}">
+        <input placeholder="Min" id="g${team}-min-${i}" style="text-align:center;" value="${g.minuto||''}">`;
+      cont.appendChild(div);
+    }
+  });
+}
+
+// ==================== BUILD DATA ====================
+function collectData() {
+  const d = {
+    comp: document.getElementById('f-comp').value,
+    rodada: document.getElementById('f-round').value,
+    season: document.getElementById('f-season').value,
+    l: document.getElementById('f-l').value,
+    r: document.getElementById('f-r').value,
+    casa: document.getElementById('f-casa').value,
+    gc: document.getElementById('f-gc').value,
+    gf: document.getElementById('f-gf').value,
+    fora: document.getElementById('f-fora').value,
+    pen_gc: document.getElementById('f-pen-gc').value,
+    pen_gf: document.getElementById('f-pen-gf').value,
+    timestamp: new Date().toLocaleString('pt-BR'),
+  };
+  STATS_FIELDS.forEach(f => {
+    d['sc_'+f.key] = document.getElementById('sc-'+f.key)?.value || '';
+    d['sa_'+f.key] = document.getElementById('sa-'+f.key)?.value || '';
+  });
+
+  // Goals
+  ['pic','adv'].forEach(team => {
+    const cont = document.getElementById('goals-'+team);
+    d['gols_'+team] = [];
+    for(let i=0;i<cont.children.length;i++){
+      const p = document.getElementById('g'+team+'-player-'+i)?.value || '';
+      const m = document.getElementById('g'+team+'-min-'+i)?.value || '';
+      if(p||m) d['gols_'+team].push({jogador:p, minuto:m});
+    }
+  });
+
+  return d;
+}
+
+// ==================== BUILD ROW FOR XLSX ====================
+// Column mapping based on the "Cópia de T2" sheet structure (cols 41-77)
+// The T10 sheet (regular) has 71 cols, but Cópia de T2 has 78 cols with stats
+// We'll build a row matching the "Cópia de T2" / stats-enabled format
+function buildXlsxRow(d) {
+  // Build gols strings
+  const goalsStr = (arr) => arr.map(g => g.jogador + (g.minuto ? ' '+g.minuto : '')).join(', ');
+
+  // For gols pic: up to 5 players, each with player + minuto
+  const gpic = d.gols_pic || [];
+  const gadv = d.gols_adv || [];
+
+  const penaltis = (d.pen_gc || d.pen_gf) 
+    ? (d.pen_gc||'') + (d.pen_gf ? '-'+d.pen_gf : '')
+    : '';
+
+  // Row matches column order of "Cópia de T2":
+  // col41=Comp, col42=Rodada, col43=L, col44=R, col45=Casa, col46=GC, col47=Pen, [48=Pen GF?], col49=GF, col50=Fora
+  // col51-58 = stats casa, col59-66 = stats adv
+  // col67+ = gols pic (J1,Min1,J2,Min2...), col77+ = gols adv
+  return [
+    d.comp, d.rodada, d.l, d.r, d.casa, d.gc||0,
+    d.pen_gc||'', d.pen_gf||'',
+    d.gf||0, d.fora,
+    // Casa stats
+    d.sc_finalizacoes, d.sc_finalizacoes_certas, d.sc_posse, d.sc_divididas,
+    d.sc_faltas, d.sc_escanteios, d.sc_precisao_fin, d.sc_precisao_passe,
+    // Fora stats
+    d.sa_finalizacoes, d.sa_finalizacoes_certas, d.sa_posse, d.sa_divididas,
+    d.sa_faltas, d.sa_escanteios, d.sa_precisao_fin, d.sa_precisao_passe,
+    // Gols Picuiense (up to 5)
+    gpic[0]?.jogador||'', gpic[0]?.minuto||'',
+    gpic[1]?.jogador||'', gpic[1]?.minuto||'',
+    gpic[2]?.jogador||'', gpic[2]?.minuto||'',
+    gpic[3]?.jogador||'', gpic[3]?.minuto||'',
+    gpic[4]?.jogador||'', gpic[4]?.minuto||'',
+    // Gols Adversário (up to 5)
+    gadv[0]?.jogador||'', gadv[0]?.minuto||'',
+    gadv[1]?.jogador||'', gadv[1]?.minuto||'',
+    gadv[2]?.jogador||'', gadv[2]?.minuto||'',
+    gadv[3]?.jogador||'', gadv[3]?.minuto||'',
+    gadv[4]?.jogador||'', gadv[4]?.minuto||'',
+  ];
+}
+
+const ROW_HEADERS = [
+  'Competição','Rodada','L','R','Casa','GC','Pênaltis GC','Pênaltis GF','GF','Fora',
+  'Fin. Casa','Fin. Certas Casa','Posse Casa (%)','Divididas Casa','Faltas Casa','Escanteios Casa','Prec. Fin. Casa','Prec. Passe Casa',
+  'Fin. Fora','Fin. Certas Fora','Posse Fora (%)','Divididas Fora','Faltas Fora','Escanteios Fora','Prec. Fin. Fora','Prec. Passe Fora',
+  'Gol Pic 1','Min','Gol Pic 2','Min','Gol Pic 3','Min','Gol Pic 4','Min','Gol Pic 5','Min',
+  'Gol Adv 1','Min','Gol Adv 2','Min','Gol Adv 3','Min','Gol Adv 4','Min','Gol Adv 5','Min',
+];
+
+// ==================== PREVIEW ====================
+function buildPreview() {
+  const d = collectData();
+  matchData = d;
+
+  // Score display
+  const lv = d.l;
+  const picScore = lv==='C' ? d.gc : d.gf;
+  const advScore = lv==='C' ? d.gf : d.gc;
+  const picTeam = lv==='C' ? d.casa : d.fora;
+  const advTeam = lv==='C' ? d.fora : d.casa;
+
+  document.getElementById('res-teams').textContent = picTeam + ' × ' + advTeam;
+  document.getElementById('res-score').textContent = picScore + ' – ' + advScore;
+  document.getElementById('res-comp').textContent = d.comp + ' · ' + d.rodada + ' · ' + d.season;
+}
+
+// ==================== DOWNLOAD SINGLE ROW ====================
+function downloadRow() {
+  const d = collectData();
+  matchData = d;
+  const row = buildXlsxRow(d);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([ROW_HEADERS, row]);
+  ws['!cols'] = ROW_HEADERS.map(h=>({wch:Math.max(h.length+2,12)}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Partida');
+  const fname = `partida_${(d.casa||'casa').replace(/\s/g,'_')}_vs_${(d.fora||'fora').replace(/\s/g,'_')}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  document.getElementById('dl-status').innerHTML = '<span style="color:var(--success)">✅ Arquivo baixado: '+fname+'</span>';
+}
+
+// ==================== LOAD ORIGINAL AND APPEND ====================
+function loadAndAppend() {
+  document.getElementById('orig-file').click();
+}
+
+async function appendToOriginal(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const d = collectData();
+  matchData = d;
+  const statusEl = document.getElementById('dl-status');
+  statusEl.textContent = 'Processando planilha...';
+
+  const ab = await file.arrayBuffer();
+  const wb = XLSX.read(ab);
+  const sheetName = d.season + (d.season==='T2'?' ':d.season==='T10'?'':' ');
+
+  // Try to find the right sheet
+  let targetSheet = null;
+  let targetName = '';
+  for(const sn of wb.SheetNames) {
+    if(sn.trim()===d.season.trim() || sn.includes(d.season)) {
+      targetSheet = wb.Sheets[sn];
+      targetName = sn;
+      break;
+    }
+  }
+
+  if(!targetSheet) {
+    // fallback to T10 or first match
+    const fallback = wb.SheetNames.find(s=>s.startsWith('T'));
+    targetSheet = wb.Sheets[fallback];
+    targetName = fallback;
+    statusEl.innerHTML = `<span style="color:orange">⚠ Aba "${d.season}" não encontrada, usando "${targetName}"</span>`;
+  }
+
+  // Find the next empty row in the match data section (column AP = index 41)
+  const ws = targetSheet;
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:BZ200');
+  
+  // Find first empty row after header (row 5 = index 4 in 0-based)
+  let nextRow = 5; // 1-indexed row
+  for(let r=5; r<=range.e.r+2; r++) {
+    const cell = ws[XLSX.utils.encode_cell({r:r, c:41})]; // col AP
+    if(!cell || !cell.v) { nextRow = r+1; break; } // +1 for 1-indexed
+    nextRow = r+2;
+  }
+
+  // Write row data starting at column AP (index 41 = col AP)
+  const row = buildXlsxRow(d);
+  row.forEach((val, colOffset) => {
+    if(val==='' || val===null || val===undefined) return;
+    const cellAddr = XLSX.utils.encode_cell({r: nextRow-1, c: 41+colOffset});
+    ws[cellAddr] = {v: val, t: typeof val==='number' ? 'n' : 's'};
+  });
+
+  // Update range
+  const newRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  if(nextRow > newRange.e.r+1) newRange.e.r = nextRow-1;
+  if(41+row.length-1 > newRange.e.c) newRange.e.c = 41+row.length-1;
+  ws['!ref'] = XLSX.utils.encode_range(newRange);
+
+  XLSX.writeFile(wb, 'Modo_Carreira_Picuiense_atualizado.xlsx');
+  statusEl.innerHTML = '<span style="color:var(--success)">✅ Planilha atualizada baixada! Partida adicionada na linha '+(nextRow)+' da aba "'+targetName+'"</span>';
+}
+
+// ==================== HISTORY ====================
+function saveToHistory() {
+  const d = collectData();
+  history.unshift({...d, id: Date.now()});
+  localStorage.setItem('pic_history', JSON.stringify(history));
+  resetForm();
+  switchView('historico', document.querySelector('header nav button:last-child'));
+  renderHistory();
+}
+
+function resetForm() {
+  imgs={1:null,2:null};
+  ['prev1','prev2'].forEach(id=>{document.getElementById(id).style.display='none';});
+  ['label1','label2'].forEach(id=>{document.getElementById(id).style.display='';});
+  ['zone1','zone2'].forEach(id=>{document.getElementById(id).classList.remove('filled');});
+  document.getElementById('f-round').value='';
+  document.getElementById('f-casa').value='';
+  document.getElementById('f-gc').value='';
+  document.getElementById('f-gf').value='';
+  document.getElementById('f-fora').value='';
+  document.getElementById('f-pen-gc').value='';
+  document.getElementById('f-pen-gf').value='';
+  renderStatsRows();
+  renderGoalRows();
+  document.getElementById('btn-next1').disabled=true;
+  document.getElementById('status-bar').style.display='none';
+  gotoStep(1);
+}
+
+function renderHistory() {
+  const cont = document.getElementById('history-list');
+  const q = document.getElementById('search-hist')?.value?.toLowerCase() || '';
+  const filtered = history.filter(d =>
+    !q || (d.casa||'').toLowerCase().includes(q) ||
+    (d.fora||'').toLowerCase().includes(q) ||
+    (d.comp||'').toLowerCase().includes(q)
+  );
+
+  if(filtered.length===0) {
+    cont.innerHTML = '<div class="history-empty">Nenhuma partida registrada ainda.</div>';
+    return;
+  }
+
+  const rows = filtered.map(d => {
+    const lv = d.l;
+    const picScore = lv==='C' ? d.gc : d.gf;
+    const advScore = lv==='C' ? d.gf : d.gc;
+    const picTeam = lv==='C' ? d.casa : d.fora;
+    const advTeam = lv==='C' ? d.fora : d.casa;
+    const rColor = d.r==='V'?'#1a7a3a':d.r==='E'?'#b07d00':'#c0392b';
+    return `<tr>
+      <td><span style="font-size:0.75rem;color:var(--muted)">${d.timestamp||''}</span></td>
+      <td>${d.comp||''}</td>
+      <td>${d.rodada||''}</td>
+      <td>${d.season||''}</td>
+      <td><strong>${picTeam}</strong> ${picScore} – ${advScore} <strong>${advTeam}</strong></td>
+      <td><span style="color:${rColor};font-weight:600">${d.r==='V'?'Vitória':d.r==='E'?'Empate':'Derrota'}</span></td>
+      <td><button class="btn btn-danger" onclick="deleteHistory(${d.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  cont.innerHTML = `<div class="preview-table-wrap"><table class="preview-table">
+    <thead><tr>
+      <th>Data</th><th>Competição</th><th>Rodada</th><th>Temp.</th><th>Partida</th><th>Resultado</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function deleteHistory(id) {
+  history = history.filter(d=>d.id!==id);
+  localStorage.setItem('pic_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function clearHistory() {
+  if(confirm('Apagar todo o histórico?')) {
+    history=[];
+    localStorage.removeItem('pic_history');
+    renderHistory();
+  }
+}
+
+function downloadAllHistory() {
+  if(history.length===0) return;
+  const wb = XLSX.utils.book_new();
+  const rows = history.map(d => buildXlsxRow(d));
+  const ws = XLSX.utils.aoa_to_sheet([ROW_HEADERS, ...rows]);
+  ws['!cols'] = ROW_HEADERS.map(h=>({wch:Math.max(h.length+2,12)}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Histórico');
+  XLSX.writeFile(wb, 'historico_partidas_picuiense.xlsx');
+}
+</script>
+</body>
+</html>
